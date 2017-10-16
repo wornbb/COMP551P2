@@ -1,9 +1,5 @@
-import csv
-
-
-train_set_x = 'train_set_x.csv'
-train_set_y = 'train_set_y.csv'
-[index,x] = read_csv(train_set_x)
-[index,y] = read_csv(train_set_y)
-
+import sys
+from Utility.csv_reader import read_csv
+sys.path.append('..\Utility')
+[x,y] = read_csv('cleaner1.csv')
 
