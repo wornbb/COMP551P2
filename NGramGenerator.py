@@ -48,7 +48,7 @@ class NGramGenerator(TransformerMixin):
         # Construct hash of arrays.
         for index, row in X.iterrows():
             # Code the language of the observation
-            category = np.array([0, 0, 0, 0, 0])
+            category = np.zeros(3)
             category[row['Category']] = 1
             # Break the text into n-grams
             ngrams = self.string_to_ngrams(row['Text'])
