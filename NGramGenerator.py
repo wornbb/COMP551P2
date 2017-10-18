@@ -23,11 +23,10 @@ from sklearn.base import TransformerMixin
 #            all texts.  This means that an n-gram is counted <multiple times> per text.
 
 class NGramGenerator(TransformerMixin):
-    def __init__(self, n=1, multimap=True, count_threshold=0, normalize=True, verbose=False):
+    def __init__(self, n=1, multimap=True, count_threshold=0, verbose=False):
         self.n = n
         self.multimap = multimap
         self.count_threshold = count_threshold,
-        self.normalize = normalize
         self.verbose = verbose
 
     # Extract n-grams from text snippit
@@ -38,13 +37,13 @@ class NGramGenerator(TransformerMixin):
     # Output:
     #   - List<String> i.e. ["ok","ok"]
 
-    def string_to_ngrams(self, s, n=1):
+    def string_to_ngrams(self, s):
         text = str(s).decode('utf-8').lower()
         text = text.replace(' ', '') # remove spaces
-        ngrams = nltk.ngrams([c for c in text], n)
+        ngrams = nltk.ngrams([c for c in text], self.n)
         return [''.join(g) for g in ngrams]
 
-    def transform(self, X, Y=None):
+    def transform(self, X):
         Z = {}
         # Construct hash of arrays.
         for index, row in X.iterrows():
@@ -52,7 +51,7 @@ class NGramGenerator(TransformerMixin):
             category = np.array([0, 0, 0, 0, 0])
             category[row['Category']] = 1
             # Break the text into n-grams
-            ngrams = self.string_to_ngrams(row['Text'], n = 1)
+            ngrams = self.string_to_ngrams(row['Text'])
             if not self.multimap:
                 ngrams = list(set(ngrams))
             for ngram in ngrams:
@@ -68,12 +67,7 @@ class NGramGenerator(TransformerMixin):
         # Filter low counts
         keep = Z.apply(lambda row: sum(row) >= self.count_threshold, axis = 1)
         Z = Z[keep == 1]
-        # Normalize by sum of y for each col y in Y
-        if self.normalize and Y != None:
-            totals = coll.Counter(Y['Category'])
-            for colname in totals:
-                Z[colname] = Z[colname].apply(lambda x: 1. * x / totals[colname])
-        # Return
+
         return Z
 
     def fit(self, *_):
