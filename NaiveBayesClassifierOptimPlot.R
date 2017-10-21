@@ -40,6 +40,6 @@ gg = gg + xlab("n")
 #                       data = z %>% group_by(metric, lam, x) %>% summarize(max_score = max(score)), linetype="dotted")
 #gg = gg + xlab(expression(lambda))
 
-pdf("NaiveBayesClassifierOptimPlot.pdf", width = 7.5, height = 5)
+png("NaiveBayesClassifierOptimPlot.png", width = 7.5, height = 5)
 print(gg)
 dev.off()
