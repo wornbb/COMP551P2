@@ -13,7 +13,7 @@ x %<>% dplyr::rename("Accuracy" = test_accuracy,
                      "Recall" = test_recall,
                      "Average" = test_average)
 
-xx = data.frame("idx" = 1:nrow(x), x[4:7]) #%>% melt(key = "metric", value = "score")
+xx = data.frame("idx" = 1:nrow(x), x[5:8]) #%>% melt(key = "metric", value = "score")
 xx = cbind(idx = xx[, 1], xx[, -1] %>% melt) %>% dplyr::select(idx, "metric" = variable, "score" = value)
 yy = data.frame("idx" = 1:nrow(x), x[1:3])
 
@@ -40,6 +40,6 @@ gg = gg + xlab("n")
 #                       data = z %>% group_by(metric, lam, x) %>% summarize(max_score = max(score)), linetype="dotted")
 #gg = gg + xlab(expression(lambda))
 
-png("NaiveBayesClassifierOptimPlot.png", width = 7.5, height = 5)
+pdf("NaiveBayesClassifierOptimPlot.pdf", width = 7.5, height = 5)
 print(gg)
 dev.off()
