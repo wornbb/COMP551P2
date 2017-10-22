@@ -43,3 +43,21 @@ gg = gg + xlab("n")
 pdf("NaiveBayesClassifierOptimPlot.pdf", width = 7.5, height = 5)
 print(gg)
 dev.off()
+
+# part2
+
+nof = x[,1:4][,-2] %>% unique
+nof$c = paste0("c=", nof$c)
+
+gg = ggplot(data = nof,
+            mapping = aes(x = n,
+                          y = number_of_features))
+gg = gg + geom_line()
+gg = gg + facet_wrap( ~ c)
+gg = gg + scale_x_continuous(breaks = 1:3)
+gg = gg + ylab("Number of Features")
+gg = gg + xlab("n")
+
+pdf("NaiveBayesClassifierOptimPlot_numFeatures.pdf", width = 7.5, height = 2.5)
+print(gg)
+dev.off()
