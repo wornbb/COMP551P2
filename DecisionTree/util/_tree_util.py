@@ -58,7 +58,7 @@ def is_pure(s):
 def spliter(x, y):
     # If there could be no split, just return the original set
     if is_pure(y) or len(y) == 0:
-        return y
+        return y[0]
 
     # We get attribute that gives the highest mutual information
     gain = np.array([ig_freature(x_attr, y) for x_attr in x.T])
@@ -77,12 +77,14 @@ def spliter(x, y):
         y_subset = y.take(v, axis=0)
         x_subset = x.take(v, axis=0)
 
-        res["x_%d = %d" % (selected_attr, thres)] = spliter(x_subset, y_subset)
-
+        res["%d, %d" % (selected_attr, thres)] = spliter(x_subset, y_subset)
+        print(res)
     return res
-x1 = [0, 1, 1, 2, 2, 2]
-x2 = [0, 0, 1, 1, 1, 0]
-X = np.array([x1, x2]).T
-y = np.array([0, 0, 0, 1, 1, 0])
-a = spliter(X,y)
-print(a)
+
+if __name__ == '__main__':
+    x1 = [0, 1, 1, 2, 2, 2]
+    x2 = [0, 0, 1, 1, 1, 0]
+    X = np.array([x1, x2]).T
+    y = np.array([1, 0, 0, 1, 1, 0])
+    a = spliter(X,y)
+    print(a)
