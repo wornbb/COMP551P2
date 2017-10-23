@@ -3,33 +3,37 @@ import math
 def partition(a):
     return {c: (a==c).nonzero()[0] for c in np.unique(a)}
 def split(x,y,thres,x_attr):
-    x = np.double(x)
-    y = np.array(y)
-    index_left = (x[:,x_attr] <= thres).nonzero()[0]
-    index_right = (x[:,x_attr] >thres).nonzero()[0]
+
+    x_selected = list(x[:,x_attr])
+    index_left = (x_selected <= thres).nonzero()[0]
+    index_right = (x_selected >thres).nonzero()[0]
     return {0:index_left,1:index_right}
 
 def optimal_thres(x,y):
-    ig_record = [[candidate_split_value,ig_split(x,y,candidate_split_value)] for candidate_split_value in np.unique(x)]
-    best_ig = max(np.array(ig_record)[:,1])
+    ig_record = [[candidate_split_value, ig_split(x, y, candidate_split_value)] for candidate_split_value in np.unique(x)]
+    best_ig = max(np.array(ig_record)[:, 1])
     best_split_value = [candidate_split_value for candidate_split_value,ig_value
                         in ig_record if np.isclose(ig_value ,best_ig,rtol=1e-6)]
     return best_split_value[0]
 def entropy(x):
     res = 0
     val, counts = np.unique(x, return_counts=True)
-    freqs = counts.astype('float')/len(x)
+    try: samples = x.shape[0]
+    except: samples = len(x)
+    freqs = counts.astype('float')/samples
     for p in freqs:
         if p != 0.0:
             res -= p * np.log2(p)
     return res
 def ig_split(x,y,thres):
-    x = np.double(x)
-    y = np.array(y)
+    #x = x.toarray().astype(np.int32)
+    #y = np.array([int(i) for i in y])
     index_left = (x<=thres).nonzero()[0]
     index_right = (x>thres).nonzero()[0]
-    p_left = len(index_left)/len(x)
-    p_right = len(index_right)/len(x)
+    try: samples = x.shape[0]
+    except: samples = len(x)
+    p_left = len(index_left)/samples
+    p_right = len(index_right)/samples
     ref_entropy = entropy(y)
     y_left = y.take(index_left,axis=0)
     y_right = y.take(index_right,axis=0)
@@ -39,16 +43,18 @@ def ig_split(x,y,thres):
     return ig
 
 def ig_freature(x, y):
-
+    #x = x.toarray().ravel().astype(np.int32)
+    #y = np.array([int(i) for i in y])
     res = entropy(y)
-
+    try: samples = x.shape[0]
+    except: samples = len(x)
     # We partition x, according to attribute values x_i
     val, counts = np.unique(x, return_counts=True)
-    freqs = counts.astype('float')/len(x)
+    freqs = counts.astype('float')/samples
 
     # We calculate a weighted average of the entropy
     for p, v in zip(freqs, val):
-        res -= p * entropy(y[x == v])
+        res -= p * entropy(y[x==v])
 
     return res
 

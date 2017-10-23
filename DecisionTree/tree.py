@@ -5,6 +5,7 @@ from DecisionTree.util._tree_util import ig_freature
 from DecisionTree.util._tree_util import is_pure
 from DecisionTree.util._tree_util import optimal_thres
 from DecisionTree.util._tree_util import split
+from DecisionTree.util._tree_util import ig_split
 
 x1 = [0, 1, 1, 2, 2, 2]
 x2 = [0, 0, 1, 1, 1, 0]
@@ -27,14 +28,23 @@ class leaf():
 class decision_tree():
     def __init__(self):
         self.root = None
-    def fit(self, x, y):
+        self.depth = None
+    def fit(self, x, y, depth):
         #self.build_root(x,y)
-        self.root = self.spliter(x,y)
+        self.depth = depth
+        x = x.toarray().astype(np.int32)
+        y = np.array([int(i) for i in y])
+        current_deppth = 0
+        self.root = self.spliter(x,y, current_deppth)
         return 0
 
     def predict(self,x):
-        x = np.array(x)
-        y = np.empty([len(x),1])
+        x = x.toarray().astype(np.int32)
+        try:
+            samples = x.shape[0]
+        except:
+            samples = len(x)
+        y = np.empty([samples,1])
         index = 0
         for test in x:
             tree = self.root
@@ -49,11 +59,52 @@ class decision_tree():
             index += 1
         return y
 
-
-
-    def spliter(self,x, y):
+    def new_spliter(self,x, y):
         # If there could be no split, just return the original set
         tree = node()
+        if is_pure(y) or len(y) == 0:
+            tree = leaf()
+            #tree.label = np.bincount(y).argmax()
+            tree.label, _ = Counter(y).most_common(1)[0]
+            return tree
+        # We get attribute that gives the highest mutual information
+        thres_array = [optimal_thres(x_attr, y ) for x_attr in x.T]
+        gain = np.array([ig_split(x_attr, y,thres) for x_attr in x.T for thres in thres_array])
+        selected_attr = np.argmax(gain)
+        thres = thres_array[int(selected_attr)]
+        # If there's no gain at all, nothing has to be done, just return the original set
+        if np.all(gain < 1e-6):
+            tree = leaf()
+            tree.label,_ = Counter(y).most_common(1)[0]
+            return tree
+        # We split using the selected attribute
+
+        if tree.split_thres == None:
+            tree.split_thres = thres
+            tree.split_atrr =selected_attr
+        else:pass
+        sets = split(x, y, thres, selected_attr)
+        # sets = partition(x[:, selected_attr])
+        #res = {}
+        for k, v in sets.items():
+            y_subset = y.take(v, axis=0)
+            x_subset = x.take(v, axis=0)
+            if k==0:
+                #this goes left
+                tree.left_child = self.spliter(x_subset,y_subset)
+            elif k==1:
+                tree.right_child = self.spliter(x_subset,y_subset)
+                #this goes right
+          #  res["%d, %d" % (selected_attr, thres)] = spliter(x_subset, y_subset)
+        return tree
+
+    def spliter(self,x, y, current_depth):
+        # If there could be no split, just return the original set
+        tree = node()
+        if current_depth>=self.depth:
+            tree = leaf()
+            tree.label, _ = Counter(y).most_common(1)[0]
+            return  tree
         if is_pure(y) or len(y) == 0:
             tree = leaf()
             #tree.label = np.bincount(y).argmax()
@@ -81,9 +132,9 @@ class decision_tree():
             x_subset = x.take(v, axis=0)
             if k==0:
                 #this goes left
-                tree.left_child = self.spliter(x_subset,y_subset)
+                tree.left_child = self.spliter(x_subset,y_subset,current_depth+1)
             elif k==1:
-                tree.right_child = self.spliter(x_subset,y_subset)
+                tree.right_child = self.spliter(x_subset,y_subset,current_depth+1)
                 #this goes right
           #  res["%d, %d" % (selected_attr, thres)] = spliter(x_subset, y_subset)
         return tree
