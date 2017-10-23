@@ -9,12 +9,12 @@ from DecisionTree import tree
 import pickle
 
 [index,x,y] = read_csv('balanced.csv',3)
-[index,x_pred] = read_csv('test_set_x.csv')
-x = x[1:len(x)]
-y = y[1:len(y)]
-x_pred = x_pred[1:len(x_pred)]
+sp = int(len(x)/10)
+x = x[sp:len(x)]
+y = y[sp:len(y)]
+x_pred = x[1:sp]
+y_test = y[1:sp]
 
-# vectorizer for the training & testing sets
 
 ngram_vectorizer = CountVectorizer(analyzer='char_wb', ngram_range=(1, 1))
 counts = ngram_vectorizer.fit_transform(x)
@@ -23,14 +23,17 @@ feature_names = ngram_vectorizer.get_feature_names()
 fe = CountVectorizer(analyzer='char_wb', ngram_range=(1, 1),vocabulary=feature_names)
 counts_pred = fe.fit_transform(x_pred)
 
-decision_tree = tree.decision_tree()
-decision_tree.fit(counts,y,5)
+buffer = []
+for depth in range(1,260,10):
+    decision_tree = tree.decision_tree()
+    decision_tree.fit(counts, y, depth)
+    y_pred = decision_tree.predict(counts_pred)
+    acc = sum(np.transpose(y_pred) == y_test.astype(int))
+    buffer.append((depth,acc))
 
-#filename = 'finalized_model.sav'
-#pickle.dump(decision_tree, open(filename, 'wb'))
+    filename = "depth_{}.csv".format(depth)
+pickle.dump(buffer, open("buffer", 'wb'))
+df = pd.DataFrame(buffer)
+df.to_csv("bufferbuffer.csv",encoding='utf-8',header=['Category'],index_label='Id')
 
-
-y_pred = decision_tree.predict(counts_pred)
-df = pd.DataFrame(y_pred)
-df.to_csv("predictions.csv",encoding='utf-8',header=['Category'],index_label='Id')
 
