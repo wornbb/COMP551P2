@@ -1,21 +1,37 @@
 import numpy as np
-import math
-def partition(a):
+def partition(a): #lagacy function. Don't bother reading it
     return {c: (a==c).nonzero()[0] for c in np.unique(a)}
-def split(x,y,thres,x_attr):
 
+def split(x,y,thres,x_attr):
+    ''' Split the input date set into two based on threshold
+        x: feature set. 2D np.array, different feature from same points are stored in various columns.
+        y: label set. 2D np.array. It is a vector
+        thres: threshold
+        x_attr: id for selected feature. (indicates which feature to compare)
+        return:
+        index_left: mask for the points whose selected feature is below and equal to the threshold
+        index_right: mask for the points whose selected feature is above to the threshold
+    '''
     x_selected = list(x[:,x_attr])
     index_left = (x_selected <= thres).nonzero()[0]
     index_right = (x_selected >thres).nonzero()[0]
     return {0:index_left,1:index_right}
 
 def optimal_thres(x,y):
+    '''calculate the optimal threshold
+        x: feature set. 2D np.array, different feature from same points are stored in various columns.
+        y: label set. 2D np.array. It is a vector
+
+    '''
     ig_record = [[candidate_split_value, ig_split(x, y, candidate_split_value)] for candidate_split_value in np.unique(x)]
     best_ig = max(np.array(ig_record)[:, 1])
     best_split_value = [candidate_split_value for candidate_split_value,ig_value
                         in ig_record if np.isclose(ig_value ,best_ig,rtol=1e-6)]
     return best_split_value[0]
 def entropy(x):
+    '''calculate the entropy of give set
+        x: feature set. 1D np.array, different feature from same points are stored in various columns.
+    '''
     res = 0
     val, counts = np.unique(x, return_counts=True)
     try: samples = x.shape[0]
@@ -26,8 +42,13 @@ def entropy(x):
             res -= p * np.log2(p)
     return res
 def ig_split(x,y,thres):
-    #x = x.toarray().astype(np.int32)
-    #y = np.array([int(i) for i in y])
+    '''calculate the information gain
+        x: feature set. 2D np.array, different feature from same points are stored in various columns.
+        y: label set. 2D np.array. It is a vector
+        thres: threshold
+
+        ig: float
+    '''
     index_left = (x<=thres).nonzero()[0]
     index_right = (x>thres).nonzero()[0]
     try: samples = x.shape[0]
@@ -43,8 +64,8 @@ def ig_split(x,y,thres):
     return ig
 
 def ig_freature(x, y):
-    #x = x.toarray().ravel().astype(np.int32)
-    #y = np.array([int(i) for i in y])
+    '''legacy, don't bother
+    '''
     res = entropy(y)
     try: samples = x.shape[0]
     except: samples = len(x)
@@ -59,9 +80,10 @@ def ig_freature(x, y):
     return res
 
 def is_pure(s):
+    '''determin whether all elements from the given set is the same'''
     return len(set(s)) == 1
 
-def spliter(x, y):
+def spliter(x, y): # legacy, don't bother
     # If there could be no split, just return the original set
     if is_pure(y) or len(y) == 0:
         return y[0]

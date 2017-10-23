@@ -1,12 +1,10 @@
 from Utility.csv_reader import read_csv
-from Utility.Cleaner1 import cleaner1
 import pandas as pd
 import numpy as np
-from sklearn.feature_extraction.text import CountVectorizer
-from DecisionTree import tree
-import pickle
 
-# Create a balanced input
+# Create a balanced training set
+
+# load complete training set
 [index,x,y] = read_csv('cleaner1.csv',3)
 x = x[1:len(x)]
 y = y[1:len(y)]

@@ -7,11 +7,7 @@ from DecisionTree.util._tree_util import optimal_thres
 from DecisionTree.util._tree_util import split
 from DecisionTree.util._tree_util import ig_split
 
-x1 = [0, 1, 1, 2, 2, 2]
-x2 = [0, 0, 1, 1, 1, 0]
-x3 = [0, 2, 0, 1, 1, 0]
-y = np.array([0, 2, 0, 1, 1, 0])
-class node():
+class node(): # node of decision tree
     def __init__(self):
         self.split_atrr = None
         self.split_thres = None
@@ -19,7 +15,7 @@ class node():
         self.right_child = None
     def get_name(self):
         return 'Node'
-class leaf():
+class leaf(): #leaf of decision tree
     def __init__(self):
         self.label = None
     def get_name(self):
@@ -27,23 +23,33 @@ class leaf():
 
 class decision_tree():
     def __init__(self):
-        self.root = None
-        self.depth = None
+        self.root = None #decision tree
+        self.depth = None # hyperparameter
     def fit(self, x, y, depth):
-        #self.build_root(x,y)
+        '''
+        :param x: feature set, each column represent a different feature
+        :param y: label vector
+        :param depth: hyperparameter
+        :return:
+        '''
         self.depth = depth
-        x = x.toarray().astype(np.int32)
+        x = x.toarray().astype(np.int32)  # n-gram should yield integer feature values
         y = np.array([int(i) for i in y])
         current_deppth = 0
-        self.root = self.spliter(x,y, current_deppth)
+        self.root = self.spliter(x,y, current_deppth) #recursively build the tree
         return 0
 
     def predict(self,x):
-        x = x.toarray().astype(np.int32)
-        try:
-            samples = x.shape[0]
+        '''
+        :param x: feature set, each column represent a different feature
+        :return:
+        prediction 2d np.array, vector
+        '''
+        x = x.toarray().astype(np.int32)  # n-gram should yield integer feature values
+        try: # only used for hand-made validation.
+            samples = x.shape[0] #when x is np.array, this is the case for our project
         except:
-            samples = len(x)
+            samples = len(x) # when x is a list, this is the case when testing the codes during the development
         y = np.empty([samples,1])
         index = 0
         for test in x:
@@ -59,74 +65,43 @@ class decision_tree():
             index += 1
         return y
 
-    def new_spliter(self,x, y):
-        # If there could be no split, just return the original set
-        tree = node()
-        if is_pure(y) or len(y) == 0:
-            tree = leaf()
-            #tree.label = np.bincount(y).argmax()
-            tree.label, _ = Counter(y).most_common(1)[0]
-            return tree
-        # We get attribute that gives the highest mutual information
-        thres_array = [optimal_thres(x_attr, y ) for x_attr in x.T]
-        gain = np.array([ig_split(x_attr, y,thres) for x_attr in x.T for thres in thres_array])
-        selected_attr = np.argmax(gain)
-        thres = thres_array[int(selected_attr)]
-        # If there's no gain at all, nothing has to be done, just return the original set
-        if np.all(gain < 1e-6):
-            tree = leaf()
-            tree.label,_ = Counter(y).most_common(1)[0]
-            return tree
-        # We split using the selected attribute
-
-        if tree.split_thres == None:
-            tree.split_thres = thres
-            tree.split_atrr =selected_attr
-        else:pass
-        sets = split(x, y, thres, selected_attr)
-        # sets = partition(x[:, selected_attr])
-        #res = {}
-        for k, v in sets.items():
-            y_subset = y.take(v, axis=0)
-            x_subset = x.take(v, axis=0)
-            if k==0:
-                #this goes left
-                tree.left_child = self.spliter(x_subset,y_subset)
-            elif k==1:
-                tree.right_child = self.spliter(x_subset,y_subset)
-                #this goes right
-          #  res["%d, %d" % (selected_attr, thres)] = spliter(x_subset, y_subset)
-        return tree
 
     def spliter(self,x, y, current_depth):
+        '''
+        spliter used to build the tree
+        :param x: feature set, each column represent a different feature
+        :param y: label vector
+        :param depth: hyperparameter
+        :return:
+        '''
         # If there could be no split, just return the original set
         tree = node()
-        if current_depth>=self.depth:
+        if current_depth>=self.depth: #exit condition, when maximum depth reached
             tree = leaf()
             tree.label, _ = Counter(y).most_common(1)[0]
             return  tree
-        if is_pure(y) or len(y) == 0:
+        if is_pure(y) or len(y) == 0: #exit condition when no need to further split
             tree = leaf()
-            #tree.label = np.bincount(y).argmax()
             tree.label, _ = Counter(y).most_common(1)[0]
             return tree
-        # We get attribute that gives the highest mutual information
+        # We get attribute that gives the highest information gain
         gain = np.array([ig_freature(x_attr, y) for x_attr in x.T])
         selected_attr = np.argmax(gain)
         # If there's no gain at all, nothing has to be done, just return the original set
-        if np.all(gain < 1e-6):
+        if np.all(gain < 1e-6): #exit condition when no need to further split
             tree = leaf()
             tree.label,_ = Counter(y).most_common(1)[0]
             return tree
         # We split using the selected attribute
         thres = optimal_thres(x[:, selected_attr], y)
+
+        # special case handler. When decision tree is at its root
         if tree.split_thres == None:
             tree.split_thres = thres
             tree.split_atrr =selected_attr
         else:pass
         sets = split(x, y, thres, selected_attr)
-        # sets = partition(x[:, selected_attr])
-        #res = {}
+        # recursively grow the tree
         for k, v in sets.items():
             y_subset = y.take(v, axis=0)
             x_subset = x.take(v, axis=0)
@@ -134,9 +109,8 @@ class decision_tree():
                 #this goes left
                 tree.left_child = self.spliter(x_subset,y_subset,current_depth+1)
             elif k==1:
+                # this goes right
                 tree.right_child = self.spliter(x_subset,y_subset,current_depth+1)
-                #this goes right
-          #  res["%d, %d" % (selected_attr, thres)] = spliter(x_subset, y_subset)
         return tree
 
 if __name__ == '__main__':
